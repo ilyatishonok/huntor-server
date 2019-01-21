@@ -1,6 +1,7 @@
-const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const _ = require('underscore');
+const { User } = require('../models/user.model');
+const validateOnLogin = require('../utils/validateOnLogin');
 
 const validateUser = require('../utils/validateUser');
 
@@ -28,7 +29,6 @@ exports.signUp = async (req, res, next) => {
         res.status(200).json({
             token,
             message: 'User was created sucessfully',
-            validation,
         });
     } catch (err) {
         next(err);
@@ -40,28 +40,46 @@ exports.refreshToken = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        const user = await User.findOne({
-            name: req.body.name,
-            passwordHash: req.body.passwordHash,
-        });
-    
-        if (!user) {
-            res.status(401).json({
-                message:"no such user found"
+        const errors = validateOnLogin(req.body);
+
+        if (!_.isEmpty(errors)) {
+            return res.status(400).json({
+                errors,
+                success: false,
             });
         }
 
-        const token = jwt.sign({ id: user.id, name: user.name}, 'secretKey', {
+        const user = await User.findOne({
+            email: req.body.email,
+            password: req.body.password,
+        });
+    
+        if (!user) {
+            return res.status(404).json({
+                error: 'User with this email and password not found',
+                success: false,
+            });
+        }
+
+        const payload = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            isAdmin: user.isAdmin,
+        }
+
+        const token = jwt.sign(payload, 'secretKey', {
             expiresIn: 900,
         });
-        const refreshToken = jwt.sign({ id: user.id, name: user.name}, 'secretKey', {
-            //More expires in
+        const refreshToken = jwt.sign(payload, 'secretKey', {
+            expiresIn: 30000,
         });
 
         res.status(200).json({
-            message: 'completed',
+            success: true,
             token,
-        })
+            refreshToken,
+        });
     } catch (err) {
         next(err);
     }

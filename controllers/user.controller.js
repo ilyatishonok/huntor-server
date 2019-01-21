@@ -1,15 +1,25 @@
-const User = require('../models/user.model');
+const { Student, Tutor } = require('../models/user.model');
 
-exports.createUser = (req, res, next) => {
-    const user = new User({...req.body});
+exports.createUser = async (req, res, next) => {
+    try {
+        if (req.body.role === 'student') {
+            const student = await Student.create({ ...req.body });
+            
+            return res.status(200).json({
+                user: student,
+            });
+        } 
 
-    user.save(err => {
-        if (err) {
-            return next(err);
+        if (req.body.role === 'tutor') {
+            const tutor = await Tutor.create({ ...req.body });
+
+            return res.status(200).json({
+                user: tutor,
+            });
         }
-
-        res.send('User was created successfully');
-    })
+    } catch(err) {
+        next(err);
+    }
 }
 
 exports.getUser = (req, res) => {
