@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const _ = require('underscore');
-const { User } = require('../models/user.model');
+const User = require('../models/user.model');
 const validateOnLogin = require('../utils/validateOnLogin');
 
 const validateUser = require('../utils/validateUser');
@@ -35,7 +35,32 @@ exports.signUp = async (req, res, next) => {
     }
 }
 
-exports.refreshToken = async (req, res, next) => {
+exports.refreshToken = async (req, res) => {
+    jwt.verify(req.body.token, 'secretKey', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({
+                message: 'Invalid token',
+            });
+        }
+
+        const payload = {
+            id: decoded.id,
+            role: decoded.role,
+            isAdmin: decoded.isAdmin,
+        }
+
+        const token = jwt.sign(payload, 'secretKey', {
+            expiresIn: 900,
+        });
+        const refreshToken = jwt.sign(payload, 'secretKey', {
+            expiresIn: 30000,
+        });
+
+        return res.status(200).json({
+            token,
+            refreshToken,
+        });
+    })
 }
 
 exports.login = async (req, res, next) => {
@@ -61,12 +86,16 @@ exports.login = async (req, res, next) => {
             });
         }
 
+        console.log(user.toObject());
+
         const payload = {
-            id: user.id,
-            email: user.email,
-            role: user.role,
+            id: user.toObject()._id,
+            role: user.toObject().role,
             isAdmin: user.isAdmin,
         }
+        console.log(user['role']);
+        console.log(user.isAdmin);
+        console.log(payload);
 
         const token = jwt.sign(payload, 'secretKey', {
             expiresIn: 900,

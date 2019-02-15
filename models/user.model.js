@@ -27,38 +27,20 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
-}, {
-    discriminatorKey: 'role',
-});
-
-const StudentSchema = new Schema({
-}, {
-    discriminatorKey: 'role',
-});
-
-const TutorSchema = new Schema({
-    subjects: [{
+    wallet: {
         type: Schema.Types.ObjectId,
-        ref: 'TutorSubject',
-    }],
-    questions: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Questions',
-    }],
-    isVerified: {
-        type: Boolean,
-        default: 0,
+        ref: 'Wallet',
     },
-    isVisible: {
-        type: Boolean,
-        default: 0,
-    }
-}, {
-    discriminatorKey: 'role',
+    bookings: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Booking',
+    }],
+    tutoring: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tutoring',
+    },
 });
 
 const User = mongoose.model('User', UserSchema);
 
-exports.User = User;
-exports.Student = User.discriminator('Student', StudentSchema, 'student');
-exports.Tutor = User.discriminator('Tutor', TutorSchema, 'tutor');
+module.exports = User;

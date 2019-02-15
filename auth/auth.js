@@ -3,7 +3,7 @@ const JWTstrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
 
 passport.use(new JWTstrategy({
-    jwtFromRequest : ExtractJWT.fromBodyField('jwt'),
+    jwtFromRequest : ExtractJWT.fromAuthHeaderAsBearerToken('jwt'),
     secretOrKey: 'secretKey',
 }, async (token, done) => {
     try {

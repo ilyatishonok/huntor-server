@@ -1,6 +1,7 @@
-const { Student, Tutor } = require('../models/user.model');
+const User  = require('../models/user.model');
+const { wallet } = require('../models/wallet.model');
 
-exports.createUser = async (req, res, next) => {
+/*exports.createUser = async (req, res, next) => {
     try {
         if (req.body.role === 'student') {
             const student = await Student.create({ ...req.body });
@@ -20,20 +21,36 @@ exports.createUser = async (req, res, next) => {
     } catch(err) {
         next(err);
     }
-}
+}*/
 
-exports.getUser = (req, res) => {
-    User.findById({ _id: req.params.id }, (err, product) => {
-        if (err) {
-            throw err;
+exports.getUserInfo = async (req, res, next) => {
+    try {
+        const user = await User.findOne({
+            _id: req.user.id,
+        }, 'role isAdmin firstname lastname subjects wallet')
+            .populate({
+                path: 'subjects',
+                select: '-questions',
+            })
+            .populate({
+                path: 'wallet',
+                select: '-user',
+            }).exec();
+    
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `User with ${req.user.id} not found`,
+            });
         }
     
-        if(!product) {
-            res.sendStatus(404);
-        }
-
-        res.send(product);
-    });
+        return res.status(200).json({
+            success: true,
+            user,
+        });
+    } catch(err) {
+        next(err);
+    }
 }
 
 exports.validateEmail = (req, res) => {
